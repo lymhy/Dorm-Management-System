@@ -1,0 +1,5 @@
+# Dev profile overrides (optional).
+spring:
+  datasource:
+    username: root
+    password: root

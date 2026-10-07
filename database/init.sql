@@ -1,0 +1,240 @@
+-- Employee Dormitory Management System - MySQL 8.0 schema
+CREATE DATABASE IF NOT EXISTS dorm DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE dorm;
+
+DROP TABLE IF EXISTS sys_user;
+CREATE TABLE sys_user (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  username VARCHAR(64) NOT NULL COMMENT 'login name',
+  password VARCHAR(128) NOT NULL COMMENT 'bcrypt hash',
+  real_name VARCHAR(64) DEFAULT '' COMMENT 'real name',
+  role VARCHAR(32) DEFAULT 'admin' COMMENT 'role',
+  phone VARCHAR(32) DEFAULT '' COMMENT 'phone',
+  status INT DEFAULT 1 COMMENT '1 enabled 0 disabled',
+  creator VARCHAR(64) DEFAULT '' COMMENT 'creator',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'create time',
+  updater VARCHAR(64) DEFAULT '' COMMENT 'updater',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT 'update time',
+  deleted INT NOT NULL DEFAULT 0 COMMENT 'deleted flag',
+  tenant_id BIGINT NOT NULL DEFAULT 0 COMMENT 'tenant id',
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_username (username)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='System User';
+
+DROP TABLE IF EXISTS building;
+CREATE TABLE building (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  name VARCHAR(64) NOT NULL COMMENT 'building name',
+  code VARCHAR(32) DEFAULT '' COMMENT 'code',
+  address VARCHAR(128) DEFAULT '' COMMENT 'address',
+  floors INT DEFAULT 0 COMMENT 'total floors',
+  manager VARCHAR(64) DEFAULT '' COMMENT 'manager',
+  phone VARCHAR(32) DEFAULT '' COMMENT 'phone',
+  remark VARCHAR(255) DEFAULT '' COMMENT 'remark',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Dormitory Building';
+
+DROP TABLE IF EXISTS room;
+CREATE TABLE room (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  building_id BIGINT NOT NULL COMMENT 'building id',
+  room_no VARCHAR(32) NOT NULL COMMENT 'room number',
+  floor INT DEFAULT 1 COMMENT 'floor',
+  type INT DEFAULT 4 COMMENT '1/2/4/6 persons',
+  capacity INT DEFAULT 4 COMMENT 'capacity',
+  occupied INT DEFAULT 0 COMMENT 'occupied count',
+  status INT DEFAULT 0 COMMENT '0 empty 1 partial 2 full 3 repair',
+  price DECIMAL(10,2) DEFAULT 0 COMMENT 'monthly rent',
+  remark VARCHAR(255) DEFAULT '',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_building (building_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Room';
+
+DROP TABLE IF EXISTS employee;
+CREATE TABLE employee (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  emp_no VARCHAR(32) DEFAULT '' COMMENT 'employee no',
+  name VARCHAR(64) NOT NULL COMMENT 'name',
+  gender INT DEFAULT 1 COMMENT '1 male 2 female',
+  dept VARCHAR(64) DEFAULT '' COMMENT 'department',
+  phone VARCHAR(32) DEFAULT '' COMMENT 'phone',
+  id_card VARCHAR(32) DEFAULT '' COMMENT 'id card',
+  entry_date DATE DEFAULT NULL COMMENT 'entry date',
+  status INT DEFAULT 1 COMMENT '1 active 0 left',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Employee';
+
+DROP TABLE IF EXISTS allocation;
+CREATE TABLE allocation (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  employee_id BIGINT NOT NULL COMMENT 'employee id',
+  room_id BIGINT NOT NULL COMMENT 'room id',
+  bed_no VARCHAR(16) DEFAULT '' COMMENT 'bed number',
+  deposit DECIMAL(10,2) DEFAULT 0 COMMENT 'deposit',
+  check_in_date DATE DEFAULT NULL COMMENT 'check-in date',
+  check_out_date DATE DEFAULT NULL COMMENT 'check-out date',
+  status INT DEFAULT 1 COMMENT '1 in 0 out',
+  remark VARCHAR(255) DEFAULT '',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_room (room_id),
+  KEY idx_emp (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Check-in Allocation';
+
+DROP TABLE IF EXISTS fee;
+CREATE TABLE fee (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  room_id BIGINT NOT NULL COMMENT 'room id',
+  month VARCHAR(16) DEFAULT '' COMMENT '2026-09',
+  water_usage DECIMAL(10,2) DEFAULT 0 COMMENT 'water usage',
+  elec_usage DECIMAL(10,2) DEFAULT 0 COMMENT 'electricity usage',
+  water_fee DECIMAL(10,2) DEFAULT 0 COMMENT 'water fee',
+  elec_fee DECIMAL(10,2) DEFAULT 0 COMMENT 'electricity fee',
+  total DECIMAL(10,2) DEFAULT 0 COMMENT 'total',
+  paid INT DEFAULT 0 COMMENT '0 unpaid 1 paid',
+  due_date DATE DEFAULT NULL COMMENT 'due date',
+  remark VARCHAR(255) DEFAULT '',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_room (room_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Utility Fee';
+
+DROP TABLE IF EXISTS repair;
+CREATE TABLE repair (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  room_id BIGINT NOT NULL COMMENT 'room id',
+  employee_id BIGINT DEFAULT NULL COMMENT 'reporter',
+  title VARCHAR(128) DEFAULT '' COMMENT 'title',
+  description VARCHAR(512) DEFAULT '' COMMENT 'description',
+  status INT DEFAULT 0 COMMENT '0 pending 1 processing 2 done',
+  handler VARCHAR(64) DEFAULT '' COMMENT 'handler',
+  handle_remark VARCHAR(255) DEFAULT '' COMMENT 'remark',
+  report_time DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT 'report time',
+  finish_time DATETIME DEFAULT NULL COMMENT 'finish time',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_room (room_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Repair';
+
+DROP TABLE IF EXISTS visitor;
+CREATE TABLE visitor (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  name VARCHAR(64) NOT NULL COMMENT 'visitor name',
+  phone VARCHAR(32) DEFAULT '' COMMENT 'phone',
+  visitor_emp_id BIGINT DEFAULT NULL COMMENT 'visited employee',
+  room_id BIGINT DEFAULT NULL COMMENT 'visited room',
+  reason VARCHAR(255) DEFAULT '' COMMENT 'reason',
+  time_in DATETIME DEFAULT NULL COMMENT 'check-in time',
+  time_out DATETIME DEFAULT NULL COMMENT 'check-out time',
+  remark VARCHAR(255) DEFAULT '',
+  creator VARCHAR(64) DEFAULT '',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Visitor';
+
+DROP TABLE IF EXISTS announcement;
+CREATE TABLE announcement (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  title VARCHAR(100) NOT NULL COMMENT '公告标题',
+  content TEXT COMMENT '公告正文',
+  priority INT DEFAULT 1 COMMENT '优先级：1普通 2重要 3紧急',
+  publisher VARCHAR(64) DEFAULT '' COMMENT '发布人',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Announcement';
+
+DROP TABLE IF EXISTS system_config;
+CREATE TABLE system_config (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  cfg_key VARCHAR(50) NOT NULL COMMENT '配置键',
+  cfg_value VARCHAR(200) DEFAULT '' COMMENT '配置值',
+  description VARCHAR(100) DEFAULT '' COMMENT '说明',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uk_key (cfg_key)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='System Config';
+
+INSERT INTO system_config (cfg_key, cfg_value, description) VALUES
+  ('water_price', '5.00', '水价（元/吨）'),
+  ('elec_price', '0.60', '电价（元/度）'),
+  ('default_deposit', '500', '默认押金（元）');
+
+DROP TABLE IF EXISTS change_room;
+CREATE TABLE change_room (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  employee_id BIGINT NOT NULL COMMENT '员工ID',
+  current_room_id BIGINT DEFAULT NULL COMMENT '当前房间ID',
+  target_type INT DEFAULT NULL COMMENT '目标房型：1单人间 2双人间 4四人间 6六人间',
+  reason VARCHAR(200) DEFAULT '' COMMENT '申请原因',
+  status INT DEFAULT 0 COMMENT '状态：0待审批 1已通过 2已拒绝',
+  reply VARCHAR(200) DEFAULT '' COMMENT '管理员回复',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reply_time DATETIME DEFAULT NULL,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_employee (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Change Room Application';
+
+DROP TABLE IF EXISTS move_out;
+CREATE TABLE move_out (
+  id BIGINT NOT NULL AUTO_INCREMENT COMMENT 'PK',
+  employee_id BIGINT NOT NULL COMMENT '员工ID',
+  room_id BIGINT NOT NULL COMMENT '房间ID',
+  check_out_date DATE DEFAULT NULL COMMENT '退宿日期',
+  deposit_refund DECIMAL(10,2) DEFAULT 0 COMMENT '押金退还金额',
+  status INT DEFAULT 0 COMMENT '状态：0待审批 1已通过 2已拒绝',
+  reply VARCHAR(200) DEFAULT '' COMMENT '管理员回复',
+  create_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  reply_time DATETIME DEFAULT NULL,
+  updater VARCHAR(64) DEFAULT '',
+  update_time DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  deleted INT NOT NULL DEFAULT 0,
+  tenant_id BIGINT NOT NULL DEFAULT 0,
+  PRIMARY KEY (id),
+  KEY idx_employee (employee_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Move Out Application';

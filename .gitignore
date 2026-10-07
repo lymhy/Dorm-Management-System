@@ -1,0 +1,12 @@
+target/
+node_modules/
+dist/
+*.iml
+.idea/
+.vscode/
+
+# 本地开发工具链（JDK21 / Maven / Chrome），体积 1GB+，不入库
+tools/
+
+# 运行与构建日志
+*.log
