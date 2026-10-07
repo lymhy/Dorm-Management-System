@@ -33,6 +33,7 @@ dorm/
 ├── database/      # init.sql / notification.sql / fee_payment.sql / payment.sql
 ├── docs/          # api.md / design.md / 需求规格说明书.md / 启动运行指南.md
 ├── docker/        # Dockerfile-backend / Dockerfile-frontend / docker-compose.yml
+├── tools/         # 本地工具链（JDK 21 + Maven，约 1.2 GB，已被 .gitignore 排除，不入库）
 ├── 一键启动.md          # 一键启动说明（脚本用法 / 账号 / 排错）
 ├── start-all.ps1        # 一键启动（MySQL + 后端 + 前端）
 ├── start-backend.ps1    # 仅启动后端
@@ -43,6 +44,12 @@ dorm/
 ## 运行步骤
 
 环境要求：JDK 21、Maven 3.9+、Node 18+、MySQL 8.0
+
+> **注意：`tools/` 不入库。** `start-backend.ps1` 默认引用项目内的 `tools\jdk21\jdk-21.0.7+6` 与
+> `tools\maven\apache-maven-3.9.9`，而该目录约 1.2 GB（含安装包），已被 `.gitignore` 排除。
+> 因此**克隆本仓库后直接运行一键启动脚本会失败**，需二选一：
+> 1. 自行准备 JDK 21 与 Maven 3.9.9，放到上述 `tools/` 路径下；
+> 2. 或改用系统已安装的 JDK 21 + Maven —— 设置 `JAVA_HOME` 指向 JDK 21 后，按下面第 2 步手动启动后端。
 
 1. 启动 MySQL，建库 `dorm`，按顺序执行 `database/` 下 4 个脚本：
    ```
